@@ -3,7 +3,7 @@ import time
 
 st.set_page_config(page_title="Mon IA - Interface Pro", page_icon="✨", layout="wide")
 
-# --- STYLE CSS TYPE CHATGPT / GEMINI (MODE SOMBRE) ---
+# --- STYLE CSS TYPE CHATGPT / GEMINI ---
 st.markdown("""
     <style>
     .stApp {
@@ -26,7 +26,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- INITIALISATION DE LA MÉMOIRE DE SESSION ---
+# --- INITIALISATION DE LA MÉMOIRE ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "user_identity" not in st.session_state:
@@ -36,65 +36,34 @@ if "chats" not in st.session_state:
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = "Nouvelle discussion"
 
-# --- PAGE DE CONNEXION STYLE CHATGPT (AVEC VRAIS BOUTONS OFFICIELS GOOGLE & DISCORD) ---
+# --- PAGE DE CONNEXION INTERACTIVE FAÇON DISCORD ---
 if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align: center;'>Connectez-vous ou inscrivez-vous</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #9aa0a6; font-size: 14px;'>Vous recevrez des réponses plus intelligentes et pourrez charger des fichiers, des images, et bien plus encore.</p>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #5865F2;'>Connexion Discord</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #9aa0a6; font-size: 14px;'>Entrez vos identifiants Discord pour accéder à l'assistant.</p>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # 1. Bouton officiel "Continuer avec Google"
-        st.markdown("""
-            <a href="https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Faccounts.google.com%2F&flowName=GlifWebSignIn&flowEntry=ServiceLogin" target="_blank" style="text-decoration: none;">
-                <div style="background-color: #212121; color: #ffffff; padding: 12px; border-radius: 25px; text-align: center; font-weight: 500; margin-bottom: 12px; border: 1px solid #424242; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <span style="color: #ea4335; font-weight: bold; font-size: 16px;">G</span> Continuer avec Google
-                </div>
-            </a>
-        """, unsafe_allow_html=True)
-
-        # 2. Bouton officiel "Continuer avec Discord" (Ouvre la vraie page de connexion Discord avec l'interface officielle)
-        st.markdown("""
-            <a href="https://discord.com/login" target="_blank" style="text-decoration: none;">
-                <div style="background-color: #5865F2; color: #ffffff; padding: 12px; border-radius: 25px; text-align: center; font-weight: 500; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    🎮 Continuer avec Discord
-                </div>
-            </a>
-        """, unsafe_allow_html=True)
-
-        st.markdown("<p style='text-align: center; color: #888; font-size: 13px;'>OU</p>", unsafe_allow_html=True)
-
-        # 3. Formulaire classique par email
-        with st.form("email_login_form"):
-            email_input = st.text_input("Email address", placeholder="Entrez votre email...")
-            submit_email = st.form_submit_button("Continuer", use_container_width=True)
+        # Formulaire de connexion direct style Discord
+        with st.form("login_discord_direct"):
+            discord_input = st.text_input("E-mail ou numéro de téléphone", placeholder="nom@exemple.com")
+            password_input = st.text_input("Mot de passe", type="password", placeholder="••••••••")
             
-            if submit_email:
-                if email_input and "@" in email_input:
+            st.markdown("<br>", unsafe_allow_html=True)
+            submit_btn = st.form_submit_button("Se connecter", use_container_width=True)
+            
+            if submit_btn:
+                if discord_input and len(discord_input) > 3:
                     st.session_state.logged_in = True
-                    st.session_state.user_identity = email_input
-                    st.success("Connexion réussie !")
+                    st.session_state.user_identity = f"Discord: {discord_input}"
+                    st.success("Connexion Discord réussie !")
                     st.rerun()
                 else:
-                    st.error("Veuillez entrer une adresse e-mail valide.")
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Validation rapide après sélection du compte externe (Google/Discord)
-        with st.form("valider_compte_externe"):
-            conf_email = st.text_input("Confirmez votre email Google/Discord pour entrer :", placeholder="votre.email@gmail.com ou pseudo Discord")
-            btn_entrer = st.form_submit_button("Entrer dans l'application", use_container_width=True)
-            if btn_entrer:
-                if conf_email:
-                    st.session_state.logged_in = True
-                    st.session_state.user_identity = conf_email
-                    st.rerun()
-                else:
-                    st.error("Veuillez entrer votre email ou pseudo.")
+                    st.error("Veuillez remplir tous les champs correctement.")
 
 else:
-    # --- BARRE LATÉRALE TYPE CHATGPT ---
+    # --- BARRE LATÉRALE ---
     with st.sidebar:
         st.markdown(f"👤 **{st.session_state.user_identity}**")
         
