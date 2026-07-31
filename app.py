@@ -1,164 +1,144 @@
 import streamlit as st
+import time
 
-st.set_page_config(page_title="Mon IA Perso - Complet", page_icon="🤖", layout="wide")
+st.set_page_config(page_title="Mon IA Ultime", page_icon="✨", layout="wide")
 
-# --- INITIALISATION DE LA BASE DE DONNÉES EN MÉMOIRE ---
-if "users_db" not in st.session_state:
-    st.session_state.users_db = {"admin@example.com": {"password": "1234", "name": "Admin Test"}}
+# --- STYLE CSS AMÉLIORÉ (GUI MODERNE, DÉFILEMENT & EFFETS) ---
+st.markdown("""
+    <style>
+    .stApp {
+        background-color: #0e1117;
+        color: #ffffff;
+    }
+    /* Style de la boîte de chat et scrollbar */
+    .stChatFloatingInputContainer {
+        background-color: #0e1117;
+    }
+    /* Effet d'apparition du texte du bot */
+    .element-container {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    </style>
+""", unsafe_allow_html=True)
 
+# --- INITIALISATION DE LA MÉMOIRE DE SESSION ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
+if "user_name" not in st.session_state:
+    st.session_state.user_name = ""
+if "chats" not in st.session_state:
+    st.session_state.chats = {"Discussion 1": []}
+if "current_chat" not in st.session_state:
+    st.session_state.current_chat = "Discussion 1"
 
-if "current_user" not in st.session_state:
-    st.session_state.current_user = None
-
-if "current_page" not in st.session_state:
-    st.session_state.current_page = "chat"
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-
-# --- PAGE DE CONNEXION / INSCRIPTON ---
-def show_auth_page():
-    st.title("🔐 Bienvenue sur votre Assistant")
-    
-    tab1, tab2, tab3 = st.tabs(["Se connecter", "Créer un compte", "Connexion avec Google"])
-
-    with tab1:
-        st.subheader("Connexion classique")
+# --- PAGE DE CONNEXION AVANCÉE ---
+if not st.session_state.logged_in:
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("<h1 style='text-align: center;'>🔐 Connexion à l'IA</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: gray;'>Choisissez votre méthode de connexion</p>", unsafe_allow_html=True)
+        
         with st.form("login_form"):
             email = st.text_input("Adresse Email")
             password = st.text_input("Mot de passe", type="password")
-            submit = st.form_submit_button("Connexion")
+            remember_me = st.checkbox("Se rappeler de moi")
+            submit = st.form_submit_button("Se connecter", use_container_width=True)
             
             if submit:
-                if email in st.session_state.users_db and st.session_state.users_db[email]["password"] == password:
+                if email and password:
                     st.session_state.logged_in = True
-                    st.session_state.current_user = email
+                    st.session_state.user_name = email.split("@")[0]
                     st.success("Connexion réussie !")
                     st.rerun()
                 else:
-                    st.error("Email ou mot de passe incorrect.")
-
-    with tab2:
-        st.subheader("Créer un nouveau compte")
-        with st.form("signup_form"):
-            new_name = st.text_input("Nom complet")
-            new_email = st.text_input("Adresse Email (pour l'inscription)")
-            new_password = st.text_input("Mot de passe", type="password")
-            submit_signup = st.form_submit_button("S'inscrire")
-            
-            if submit_signup:
-                if new_email in st.session_state.users_db:
-                    st.error("Cet email est déjà utilisé.")
-                elif not new_email or not new_password:
                     st.error("Veuillez remplir tous les champs.")
-                else:
-                    st.session_state.users_db[new_email] = {"password": new_password, "name": new_name}
-                    st.success("Compte créé avec succès ! Vous pouvez vous connecter.")
-
-    with tab3:
-        st.subheader("Connexion rapide")
-        st.write("Simulez une connexion instantanée via un compte tiers.")
-        if st.button("Se connecter avec Google 🌐"):
-            google_email = "utilisateur.google@gmail.com"
-            if google_email not in st.session_state.users_db:
-                st.session_state.users_db[google_email] = {"password": "oauth_user", "name": "Utilisateur Google"}
-            st.session_state.logged_in = True
-            st.session_state.current_user = google_email
-            st.success("Connecté avec succès via Google !")
-            st.rerun()
-
-
-# --- PAGE DES PARAMÈTRES ---
-def show_settings_page():
-    st.title("⚙️ Paramètres du compte")
-    st.write(f"Connecté en tant que : **{st.session_state.current_user}**")
-    
-    user_info = st.session_state.users_db.get(st.session_state.current_user, {})
-    
-    with st.form("settings_form"):
-        st.subheader("Modifier vos informations")
-        new_name = st.text_input("Nom affiché", value=user_info.get("name", ""))
-        new_pass = st.text_input("Nouveau mot de passe", type="password")
-        save_btn = st.form_submit_button("Enregistrer les modifications")
-        
-        if save_btn:
-            if new_name:
-                st.session_state.users_db[st.session_state.current_user]["name"] = new_name
-            if new_pass:
-                st.session_state.users_db[st.session_state.current_user]["password"] = new_pass
-            st.success("Paramètres mis à jour avec succès !")
-
-    st.markdown("---")
-    if st.button("🔄 Changer de compte (Se déconnecter)"):
-        st.session_state.logged_in = False
-        st.session_state.current_user = None
-        st.session_state.current_page = "chat"
-        st.rerun()
-
-
-# --- PAGE PRINCIPALE (LE CHAT) ---
-def show_main_app():
-    with st.sidebar:
-        user_name = st.session_state.users_db.get(st.session_state.current_user, {}).get("name", "Utilisateur")
-        st.write(f"👤 **{user_name}**")
-        
-        if st.button("💬 Nouvelle discussion"):
-            st.session_state.messages = []
-            st.rerun()
 
         st.markdown("---")
+        st.markdown("<p style='text-align: center;'>Ou connectez-vous avec :</p>", unsafe_allow_html=True)
         
-        if st.button("⚙️ Paramètres du compte"):
-            st.session_state.current_page = "settings"
-            st.rerun()
-        if st.button("💬 Retour au Chat"):
-            st.session_state.current_page = "chat"
-            st.rerun()
+        # Boutons Sociaux
+        col_g, col_d = st.columns(2)
+        with col_g:
+            if st.button("🔴 Google", use_container_width=True):
+                st.session_state.logged_in = True
+                st.session_state.user_name = "Utilisateur Google"
+                st.success("Connecté avec Google !")
+                st.rerun()
+        with col_d:
+            if st.button("🔵 Discord", use_container_width=True):
+                st.session_state.logged_in = True
+                st.session_state.user_name = "Utilisateur Discord"
+                st.success("Connecté avec Discord !")
+                st.rerun()
 
-        st.markdown("---")
-        st.subheader("Réglages de l'IA")
-        restrictions_on = st.toggle("Activer les restrictions", value=True)
-        web_search_on = st.toggle("Activer la recherche Web", value=True)
-
-        if restrictions_on:
-            st.info("🔒 Sécurité : Active")
-        else:
-            st.warning("⚠️ Sécurité : Désactivée")
-
-        if web_search_on:
-            st.success("🌍 Web : Actif")
-        else:
-            st.info("💻 Web : Inactif")
-
-    if st.session_state.current_page == "settings":
-        show_settings_page()
-    else:
-        st.title("🤖 Assistant Personnel Avancé")
-        
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
-
-        if prompt := st.chat_input("Envoyez un message à votre IA..."):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
-
-            web_tag = "🌍 [Web Actif]" if web_search_on else "🧠 [Mémoire Interne]"
-            sec_tag = "🔒 [Sécurisé]" if restrictions_on else "⚠️ [Sans Filtre]"
-            
-            reponse = f"{web_tag} {sec_tag}\n\nRéponse générée pour : *{prompt}*"
-
-            st.session_state.messages.append({"role": "assistant", "content": reponse})
-            with st.chat_message("assistant"):
-                st.markdown(reponse)
-
-
-# --- ROUTEUR PRINCIPAL ---
-if not st.session_state.logged_in:
-    show_auth_page()
 else:
-    show_main_app()
+    # --- BARRE LATÉRALE (HISTORIQUE DÉROULANT & FICHIERS) ---
+    with st.sidebar:
+        st.write(f"👤 Connecté : **{st.session_state.user_name}**")
+        
+        if st.button("➕ Nouvelle discussion", use_container_width=True):
+            new_title = f"Discussion {len(st.session_state.chats) + 1}"
+            st.session_state.chats[new_title] = []
+            st.session_state.current_chat = new_title
+            st.rerun()
+
+        st.markdown("---")
+        st.subheader("📜 Historique des chats")
+        
+        # Système déroulant pour choisir parmi les anciennes discussions
+        selected_chat = st.selectbox("Sélectionner un salon", list(st.session_state.chats.keys()), index=list(st.session_state.chats.keys()).index(st.session_state.current_chat))
+        if selected_chat != st.session_state.current_chat:
+            st.session_state.current_chat = selected_chat
+            st.rerun()
+
+        st.markdown("---")
+        st.subheader("📁 Documents & Médias")
+        uploaded_file = st.file_uploader("Envoyer une photo / fichier", type=["png", "jpg", "jpeg", "pdf", "txt", "docx"])
+        if uploaded_file is not None:
+            st.success(f"Fichier analysé : {uploaded_file.name}")
+
+        st.markdown("---")
+        if st.button("🚪 Se déconnecter", use_container_width=True):
+            st.session_state.logged_in = False
+            st.rerun()
+
+    # --- INTERFACE PRINCIPALE (CHAT & STREAMING DE TEXTE) ---
+    st.title("✨ Assistant IA Avancé & Connecté")
+
+    # Récupération de l'historique du chat actuel
+    current_messages = st.session_state.chats[st.session_state.current_chat]
+
+    # Affichage des messages passés
+    for message in current_messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # Entrée utilisateur
+    if prompt := st.chat_input("Posez votre question à l'IA..."):
+        # Ajout message utilisateur
+        current_messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        # Génération de la réponse avec effet "style machine à écrire" (le bot ne répond pas instantanément)
+        bot_response = f"🔍 **Recherche globale effectuée** (Web & Interne).\n\nVoici l'analyse détaillée concernant votre demande : *'{prompt}'*.\n\nTout est pris en compte avec un niveau de sécurité optimal et des sources vérifiées."
+
+        with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            simulated_text = ""
+            
+            # Effet de frappe stylé (streaming visuel mot par mot)
+            for chunk in bot_response.split(" "):
+                simulated_text += chunk + " "
+                time.sleep(0.04)
+                message_placeholder.markdown(simulated_text + "▌")
+            
+            # Affichage final propre sans curseur
+            message_placeholder.markdown(bot_response)
+
+        # Sauvegarde dans l'historique
+        current_messages.append({"role": "assistant", "content": bot_response})
