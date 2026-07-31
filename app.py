@@ -1,7 +1,8 @@
 import streamlit as st
 import time
+from streamlit_oauth import OAuth2Component
 
-st.set_page_config(page_title="Mon IA - Authentification officielle", page_icon="✨", layout="wide")
+st.set_page_config(page_title="Mon IA - Authentification OAuth", page_icon="✨", layout="wide")
 
 # --- STYLE CSS TYPE CHATGPT / GEMINI ---
 st.markdown("""
@@ -26,18 +27,42 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# --- CONFIGURATION DES CLIENTS OAUTH (Google & Discord) ---
+# Note : Pour que les boutons fonctionnent en production, il faut déclarer 
+# les Client ID et Secrets obtenus sur Google Cloud Console et Discord Developer Portal.
+GOOGLE_CLIENT_ID = "TON_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET = "TON_GOOGLE_CLIENT_SECRET"
+
+DISCORD_CLIENT_ID = "TON_DISCORD_CLIENT_ID"
+DISCORD_CLIENT_SECRET = "TON_DISCORD_CLIENT_SECRET"
+
+# Initialisation des composants OAuth
+oauth_google = OAuth2Component(
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
+    authorize_endpoint="https://accounts.google.com/o/oauth2/v2/auth",
+    token_endpoint="https://oauth2.googleapis.com/token",
+    refresh_token_endpoint="https://oauth2.googleapis.com/token"
+)
+
+oauth_discord = OAuth2Component(
+    client_id=DISCORD_CLIENT_ID,
+    client_secret=DISCORD_CLIENT_SECRET,
+    authorize_endpoint="https://discord.com/api/oauth2/authorize",
+    token_endpoint="https://discord.com/api/oauth2/token",
+    refresh_token_endpoint="https://discord.com/api/oauth2/token"
+)
+
 # --- INITIALISATION DE LA MÉMOIRE DE SESSION ---
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "user_identity" not in st.session_state:
-    st.session_state.user_identity = ""
+if "token" not in st.session_state:
+    st.session_state.token = None
 if "chats" not in st.session_state:
     st.session_state.chats = {"Nouvelle discussion": []}
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = "Nouvelle discussion"
 
-# --- PAGE DE CONNEXION OFFICIELLE (OAUTH GOOGLE & DISCORD) ---
-if not st.session_state.logged_in:
+# --- PAGE DE CONNEXION OAUTH ---
+if not st.session_state.token:
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         st.markdown("<br><br>", unsafe_allow_html=True)
@@ -45,43 +70,41 @@ if not st.session_state.logged_in:
         st.markdown("<p style='text-align: center; color: #9aa0a6; font-size: 14px;'>Utilisez vos comptes officiels pour accéder à l'assistant.</p>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # 1. Bouton Google officiel (ouvre la page de sélection de compte Google que tu as montrée)
-        st.markdown("""
-            <a href="https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Faccounts.google.com%2F&flowName=GlifWebSignIn&flowEntry=ServiceLogin" target="_blank" style="text-decoration: none;">
-                <div style="background-color: #212121; color: #ffffff; padding: 12px; border-radius: 25px; text-align: center; font-weight: 500; margin-bottom: 12px; border: 1px solid #424242; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <span style="color: #ea4335; font-weight: bold; font-size: 16px;">G</span> Continuer avec Google
-                </div>
-            </a>
-        """, unsafe_allow_html=True)
+        # Bouton OAuth Google
+        result_google = oauth_google.authorize_button(
+            name="Continuer avec Google",
+            icon="https://www.google.com/favicon.ico",
+            redirect_uri="http://localhost:8501",
+            scope="openid email profile",
+            key="google"
+        )
 
-        # 2. Bouton Discord officiel (ouvre la page de connexion Discord)
-        st.markdown("""
-            <a href="https://discord.com/login" target="_blank" style="text-decoration: none;">
-                <div style="background-color: #5865F2; color: #ffffff; padding: 12px; border-radius: 25px; text-align: center; font-weight: 500; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    🎮 Continuer avec Discord
-                </div>
-            </a>
-        """, unsafe_allow_html=True)
+        st.markdown("<div style='margin: 10px 0;'></div>", unsafe_allow_html=True)
 
-        st.markdown("<p style='text-align: center; color: #888; font-size: 13px;'>Une fois connecté sur votre navigateur, validez votre session ci-dessous :</p>", unsafe_allow_html=True)
+        # Bouton OAuth Discord
+        result_discord = oauth_discord.authorize_button(
+            name="Continuer avec Discord",
+            icon="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png",
+            redirect_uri="http://localhost:8501",
+            scope="identify email",
+            key="discord"
+        )
 
-        # 3. Validation de l'e-mail après connexion externe
-        with st.form("validation_oauth"):
-            email_valide = st.text_input("Votre e-mail Google ou Discord :", placeholder="mon.email@gmail.com")
-            btn_valider = st.form_submit_button("Entrer dans l'application", use_container_width=True)
+        # Capture du jeton de connexion OAuth
+        if result_google and "token" in result_google:
+            st.session_state.token = result_google["token"]
+            st.session_state.user_identity = "Utilisateur Google"
+            st.rerun()
             
-            if btn_valider:
-                if email_valide and "@" in email_valide:
-                    st.session_state.logged_in = True
-                    st.session_state.user_identity = email_valide
-                    st.rerun()
-                else:
-                    st.error("Veuillez entrer un e-mail valide.")
+        if result_discord and "token" in result_discord:
+            st.session_state.token = result_discord["token"]
+            st.session_state.user_identity = "Utilisateur Discord"
+            st.rerun()
 
 else:
     # --- BARRE LATÉRALE DE L'APPLICATION ---
     with st.sidebar:
-        st.markdown(f"👤 **{st.session_state.user_identity}**")
+        st.markdown(f"👤 **{st.session_state.get('user_identity', 'Mon Compte')}**")
         
         if st.button("➕ Nouvelle discussion", use_container_width=True):
             nouveau_salon = f"Discussion {len(st.session_state.chats) + 1}"
@@ -99,7 +122,7 @@ else:
 
         st.markdown("---")
         if st.button("🚪 Se déconnecter", use_container_width=True):
-            st.session_state.logged_in = False
+            st.session_state.token = None
             st.rerun()
 
     # --- INTERFACE PRINCIPALE DE CHAT ---
@@ -138,7 +161,7 @@ else:
             if fichier_joint:
                 st.image(fichier_joint, width=250)
 
-        reponse_assistant = f"🌐 **Analyse globale et recherche approfondie** effectuées.\n\nJ'ai bien pris en compte votre requête : *'{texte_utilisateur}'*. L'ensemble des bases de données et sources sécurisées ont été recoupées pour vous apporter une solution claire et structurée."
+        reponse_assistant = f"🌐 **Authentification OAuth validée**.\n\nJ'ai bien pris en compte votre requête : *'{texte_utilisateur}'*. L'ensemble des bases de données et sources sécurisées ont été recoupées pour vous apporter une solution claire et structurée."
 
         with st.chat_message("assistant"):
             conteneur_texte = st.empty()
