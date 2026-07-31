@@ -1,9 +1,9 @@
 import streamlit as st
 import time
 
-st.set_page_config(page_title="Assistant IA - Mode Pro", page_icon="✨", layout="wide")
+st.set_page_config(page_title="Mon IA - Interface Gemini", page_icon="✨", layout="wide")
 
-# --- DESIGN GUI STYLE CHATGPT / GEMINI ---
+# --- STYLE CSS TYPE GEMINI & CHATGPT ---
 st.markdown("""
     <style>
     .stApp {
@@ -26,7 +26,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- INITIALISATION DE LA SESSION ---
+# --- INITIALISATION DE LA MÉMOIRE DE SESSION ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "user_identity" not in st.session_state:
@@ -36,69 +36,71 @@ if "chats" not in st.session_state:
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = "Nouvelle discussion"
 
-# --- VRAI PORTAIL DE CONNEXION TYPE PLATEFORME PRO ---
+# --- PORTAIL DE CONNEXION OFFICIEL (GOOGLE & DISCORD) ---
 if not st.session_state.logged_in:
-    col1, col2, col3 = st.columns([1, 1.2, 1])
+    col1, col2, col3 = st.columns([1, 1.3, 1])
     with col2:
-        st.markdown("<h2 style='text-align: center;'>Bienvenue</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #9aa0a6;'>Connectez-vous pour accéder à votre espace IA.</p>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; margin-top: 40px;'>Connexion à l'Assistant</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #9aa0a6;'>Sélectionnez votre plateforme de connexion officielle.</p>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Choix de la méthode de connexion sous forme d'onglets propres
-        auth_tab_google, auth_tab_discord = st.tabs(["🔒 Connexion Google", "🎮 Connexion Discord"])
+        # Onglets de connexion similaires aux grands modèles
+        tab_google, tab_discord = st.tabs(["🔒 Google (Officiel)", "🎮 Discord (Officiel)"])
 
-        with auth_tab_google:
-            with st.form("form_google"):
-                st.markdown("### Compte Google")
+        with tab_google:
+            with st.form("google_auth"):
+                st.markdown("### Accès via Google")
                 g_email = st.text_input("Adresse Email Google")
                 g_pass = st.text_input("Mot de passe", type="password")
-                submit_g = st.form_submit_button("Se connecter avec Google", use_container_width=True)
+                remember_g = st.checkbox("Se rappeler de moi", value=True)
+                submit_g = st.form_submit_button("Continuer avec Google", use_container_width=True)
                 
                 if submit_g:
                     if g_email and g_pass:
                         st.session_state.logged_in = True
                         st.session_state.user_identity = f"Google: {g_email}"
-                        st.success("Connexion Google réussie !")
+                        st.success("Connexion Google établie avec succès !")
                         st.rerun()
                     else:
-                        st.error("Veuillez remplir tous les champs.")
+                        st.error("Veuillez remplir tous les champs de connexion.")
 
-        with auth_tab_discord:
-            with st.form("form_discord"):
-                st.markdown("### Compte Discord")
+        with tab_discord:
+            with st.form("discord_auth"):
+                st.markdown("### Accès via Discord")
                 d_user = st.text_input("Nom d'utilisateur ou Email Discord")
                 d_pass = st.text_input("Mot de passe", type="password")
-                submit_d = st.form_submit_button("Se connecter avec Discord", use_container_width=True)
+                remember_d = st.checkbox("Se rappeler de moi", value=True)
+                submit_d = st.form_submit_button("Continuer avec Discord", use_container_width=True)
                 
                 if submit_d:
                     if d_user and d_pass:
                         st.session_state.logged_in = True
                         st.session_state.user_identity = f"Discord: {d_user}"
-                        st.success("Connexion Discord réussie !")
+                        st.success("Connexion Discord établie avec succès !")
                         st.rerun()
                     else:
-                        st.error("Veuillez remplir tous les champs.")
+                        st.error("Veuillez remplir tous les champs de connexion.")
 
-        st.markdown("<p style='text-align: center; font-size: 12px; color: gray; margin-top: 20px;'>En cas d'oubli, la réinitialisation de votre mot de passe se fait directement depuis les portails officiels respectifs.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; font-size: 12px; color: gray; margin-top: 25px;'>Pour toute réinitialisation d'e-mail ou de mot de passe, veuillez l'effectuer directement depuis les paramètres de votre compte Google ou Discord.</p>", unsafe_allow_html=True)
 
 else:
-    # --- BARRE LATÉRALE TYPE CHATGPT / GEMINI ---
+    # --- BARRE LATÉRALE (HISTORIQUE ET GESTION DES SALONS) ---
     with st.sidebar:
         st.markdown(f"👤 **{st.session_state.user_identity}**")
         
         if st.button("➕ Nouvelle discussion", use_container_width=True):
-            chat_name = f"Discussion {len(st.session_state.chats) + 1}"
-            st.session_state.chats[chat_name] = []
-            st.session_state.current_chat = chat_name
+            nouveau_salon = f"Discussion {len(st.session_state.chats) + 1}"
+            st.session_state.chats[nouveau_salon] = []
+            st.session_state.current_chat = nouveau_salon
             st.rerun()
 
         st.markdown("---")
-        st.subheader("Historique des chats")
+        st.subheader("Historique des salons")
         
-        # Liste déroulante ou sélecteur des salons
-        choix_chat = st.selectbox("Vos salons", list(st.session_state.chats.keys()), index=list(st.session_state.chats.keys()).index(st.session_state.current_chat))
-        if choix_chat != st.session_state.current_chat:
-            st.session_state.current_chat = choix_chat
+        # Sélecteur déroulant de l'historique
+        salon_actif = st.selectbox("Vos conversations", list(st.session_state.chats.keys()), index=list(st.session_state.chats.keys()).index(st.session_state.current_chat))
+        if salon_actif != st.session_state.current_chat:
+            st.session_state.current_chat = salon_actif
             st.rerun()
 
         st.markdown("---")
@@ -110,51 +112,51 @@ else:
     st.title("Bonjour")
     st.markdown("<p style='color: #9aa0a6; font-size: 18px;'>Comment puis-je vous aider aujourd'hui ?</p>", unsafe_allow_html=True)
 
-    messages_actuels = st.session_state.chats[st.session_state.current_chat]
+    messages_salon = st.session_state.chats[st.session_state.current_chat]
 
-    # Affichage de l'historique de la conversation en cours
-    for msg in messages_actuels:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-            if "file" in msg and msg["file"] is not None:
-                st.image(msg["file"], width=250)
+    # Restitution de l'historique du chat actuel
+    for message in messages_salon:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+            if "file" in message and message["file"] is not None:
+                st.image(message["file"], width=250)
 
-    # --- ZONE DE SAISIE AVEC LE BOUTON "+" À GAUCHE POUR LES FICHIERS ---
-    col_plus, col_input = st.columns([0.06, 0.94])
+    # --- ZONE DE SAISIE AVEC LE BOUTON "+" PLACÉ À GAUCHE ---
+    col_bouton_plus, col_champ_texte = st.columns([0.06, 0.94])
     
-    with col_plus:
-        # Menu déroulant popover positionné à gauche de l'input
-        ajouter_fichier = st.popover("➕", help="Joindre une image ou un fichier")
+    with col_bouton_plus:
+        menu_fichiers = st.popover("➕", help="Joindre une image ou un fichier")
     
-    with col_input:
-        prompt = st.chat_input("Envoyez un message à votre IA...")
+    with col_champ_texte:
+        prompt = st.chat_input("Posez votre question à l'IA...")
 
-    uploaded_file = None
-    with ajouter_fichier:
-        st.write("Importer un fichier")
-        uploaded_file = st.file_uploader("Sélectionner une photo ou un document", type=["png", "jpg", "jpeg", "pdf", "txt"])
+    # Chargement d'un fichier via le menu contextuel de gauche
+    fichier_joint = None
+    with menu_fichiers:
+        st.write("Ajouter des médias")
+        fichier_joint = st.file_uploader("Sélectionner une photo ou un document", type=["png", "jpg", "jpeg", "pdf", "txt"])
 
-    # Traitement du message utilisateur et de la réponse de l'IA
-    if prompt or uploaded_file:
-        contenu_prompt = prompt if prompt else "Analyse ce fichier joint :"
+    # Traitement du message et génération de la réponse avec effet dynamique
+    if prompt or fichier_joint:
+        texte_utilisateur = prompt if prompt else "Analyse ce fichier joint :"
         
-        messages_actuels.append({"role": "user", "content": contenu_prompt, "file": uploaded_file})
+        messages_salon.append({"role": "user", "content": texte_utilisateur, "file": fichier_joint})
         
         with st.chat_message("user"):
-            st.markdown(contenu_prompt)
-            if uploaded_file:
-                st.image(uploaded_file, width=250)
+            st.markdown(texte_utilisateur)
+            if fichier_joint:
+                st.image(fichier_joint, width=250)
 
-        # Réponse simulée de l'IA avec un effet "machine à écrire" stylé (le texte apparaît progressivement)
-        reponse_bot = f"🌐 **Recherche globale et traitement validé**.\n\nJ'ai bien analysé votre demande : *'{contenu_prompt}'*. Toutes les données sécurisées et sources web ont été recoupées pour vous apporter une solution claire et précise."
+        # Réponse de l'IA avec effet machine à écrire fluide
+        reponse_assistant = f"🌐 **Analyse globale et recherche approfondie** effectuées.\n\nJ'ai bien pris en compte votre requête : *'{texte_utilisateur}'*. L'ensemble des bases de données et sources sécurisées ont été recoupées pour vous apporter une solution claire et structurée."
 
         with st.chat_message("assistant"):
-            placeholder = st.empty()
+            conteneur_texte = st.empty()
             texte_anime = ""
-            for mot in reponse_bot.split(" "):
+            for mot in reponse_assistant.split(" "):
                 texte_anime += mot + " "
-                time.sleep(0.03)  # Vitesse d'écriture fluide
-                placeholder.markdown(texte_anime + "▌")
-            placeholder.markdown(reponse_bot)
+                time.sleep(0.03)
+                conteneur_texte.markdown(texte_anime + "▌")
+            conteneur_texte.markdown(reponse_assistant)
 
-        messages_actuels.append({"role": "assistant", "content": reponse_bot, "file": None})
+        messages_salon.append({"role": "assistant", "content": reponse_assistant, "file": None})
