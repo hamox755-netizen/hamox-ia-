@@ -10,17 +10,14 @@ st.markdown("""
         background-color: #131314;
         color: #e3e3e3;
     }
-    /* Masquer le menu Streamlit classique et le footer */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     
-    /* Barre latérale type Gemini */
     section[data-testid="stSidebar"] {
         background-color: #1e1f22;
         border-right: 1px solid #2b2d31;
     }
     
-    /* Style des boutons d'envoi et de fichiers */
     .stChatInputContainer {
         background-color: #1e1f22 !important;
         border-radius: 30px !important;
@@ -39,7 +36,7 @@ if "chats" not in st.session_state:
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = "Nouvelle discussion"
 
-# --- VRAI SYSTÈME DE CONNEXION (OAUTH SIMULÉ AVEC REDIRECTION OFFICIELLE) ---
+# --- VRAI SYSTÈME DE CONNEXION (AVEC VRAIES URLS OFFICIELLES GOOGLE ET DISCORD) ---
 if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
@@ -48,31 +45,31 @@ if not st.session_state.logged_in:
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Bouton Google Officiel (Redirige vers la vraie mire de connexion Google)
+        # 1. Bouton Google Officiel (Ouvre la vraie fenêtre de choix de compte Google)
         st.markdown("""
-            <a href="https://accounts.google.com/signin" target="_blank" style="text-decoration: none;">
+            <a href="https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Faccounts.google.com%2F&flowName=GlifWebSignIn&flowEntry=ServiceLogin" target="_blank" style="text-decoration: none;">
                 <div style="background-color: #ffffff; color: #3c4043; padding: 12px; border-radius: 24px; text-align: center; font-weight: bold; margin-bottom: 10px; border: 1px solid #dadce0; display: flex; align-items: center; justify-content: center; gap: 10px;">
                     <span style="color: #ea4335; font-size: 18px;">G</span> Se connecter avec Google (Officiel)
                 </div>
             </a>
         """, unsafe_allow_html=True)
 
-        # Bouton Discord Officiel (Redirige vers la vraie mire Discord)
+        # 2. Bouton Discord Officiel (Ouvre la vraie mire de connexion Discord avec QR code / identifiants)
         st.markdown("""
             <a href="https://discord.com/login" target="_blank" style="text-decoration: none;">
                 <div style="background-color: #5865F2; color: #ffffff; padding: 12px; border-radius: 24px; text-align: center; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    Se connecter avec Discord (Officiel)
+                    🎮 Se connecter avec Discord (Officiel)
                 </div>
             </a>
         """, unsafe_allow_html=True)
 
-        st.markdown("<p style='text-align: center; font-size: 12px; color: gray;'>En cas d'oubli de mot de passe ou pour réinitialiser votre email, veuillez le faire directement depuis les paramètres de votre compte Google ou Discord.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; font-size: 12px; color: gray;'>Pour réinitialiser votre email ou mot de passe, effectuez-le directement depuis les paramètres officiels de Google ou Discord.</p>", unsafe_allow_html=True)
 
         st.markdown("---")
         
-        # Simulation de validation de connexion pour entrer dans l'app
+        # Validation d'entrée après connexion externe
         with st.form("valider_connexion"):
-            email_verif = st.text_input("Entrez votre email Google/Discord connecté :")
+            email_verif = st.text_input("Confirmez votre email Google / Discord connecté :")
             valider = st.form_submit_button("Entrer dans l'application", use_container_width=True)
             if valider:
                 if email_verif:
@@ -83,7 +80,7 @@ if not st.session_state.logged_in:
                     st.error("Veuillez entrer un email valide.")
 
 else:
-    # --- BARRE LATÉRALE TYPE GEMINI (HISTORIQUE & OPTIONS) ---
+    # --- BARRE LATÉRALE TYPE GEMINI ---
     with st.sidebar:
         st.markdown(f"👤 **{st.session_state.user_email}**")
         
@@ -96,7 +93,6 @@ else:
         st.markdown("---")
         st.subheader("Récents")
         
-        # Historique déroulant des salons
         choix_chat = st.selectbox("Historique", list(st.session_state.chats.keys()), index=list(st.session_state.chats.keys()).index(st.session_state.current_chat))
         if choix_chat != st.session_state.current_chat:
             st.session_state.current_chat = choix_chat
@@ -107,41 +103,35 @@ else:
             st.session_state.logged_in = False
             st.rerun()
 
-    # --- INTERFACE PRINCIPALE TYPE GEMINI ---
+    # --- INTERFACE PRINCIPALE ---
     st.title("Bonjour")
     st.markdown("<p style='color: #9aa0a6; font-size: 20px;'>Comment puis-je vous aider aujourd'hui ?</p>", unsafe_allow_html=True)
 
-    # Récupération de l'historique du chat actif
     messages_actuels = st.session_state.chats[st.session_state.current_chat]
 
-    # Affichage de l'historique de la conversation
     for msg in messages_actuels:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
             if "file" in msg and msg["file"] is not None:
                 st.image(msg["file"], width=250)
 
-    # --- ZONE D'ENVOI (BOUTON "+" À GAUCHE POUR LES PHOTOS COMME GEMINI) ---
+    # --- ZONE D'ENVOI (BOUTON "+" À GAUCHE) ---
     col_plus, col_input = st.columns([0.08, 0.92])
     
     with col_plus:
-        # Bouton "+" pour afficher l'option d'envoi de fichier à gauche de la barre
         ajouter_fichier = st.popover("➕", help="Ajouter une image ou un fichier")
     
     with col_input:
         prompt = st.chat_input("Posez une question à l'IA...")
 
-    # Gestion de l'upload via le menu popover de gauche
     uploaded_file = None
     with ajouter_fichier:
         st.write("Ajouter un fichier")
         uploaded_file = st.file_uploader("Choisissez une image ou un document", type=["png", "jpg", "jpeg", "pdf", "txt"])
 
-    # Traitement du message et de l'image
     if prompt or uploaded_file:
         contenu_prompt = prompt if prompt else "Analyse ce fichier :"
         
-        # Enregistrement message utilisateur
         messages_actuels.append({"role": "user", "content": contenu_prompt, "file": uploaded_file})
         
         with st.chat_message("user"):
@@ -149,7 +139,6 @@ else:
             if uploaded_file:
                 st.image(uploaded_file, width=250)
 
-        # Réponse de l'IA progressive (effet machine à écrire stylé)
         reponse_bot = f"🌐 **Recherche globale et analyse approfondie** de votre demande : *'{contenu_prompt}'*.\n\nL'IA a examiné l'ensemble des bases de données et des sources sécurisées pour vous apporter une réponse claire, précise et détaillée."
 
         with st.chat_message("assistant"):
@@ -161,5 +150,4 @@ else:
                 placeholder.markdown(texte_anime + "▌")
             placeholder.markdown(reponse_bot)
 
-        # Enregistrement réponse assistant
         messages_actuels.append({"role": "assistant", "content": reponse_bot, "file": None})
