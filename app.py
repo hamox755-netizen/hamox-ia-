@@ -36,31 +36,31 @@ if "chats" not in st.session_state:
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = "Nouvelle discussion"
 
-# --- PAGE DE CONNEXION INTERACTIVE FAÇON DISCORD ---
+# --- PAGE DE CONNEXION INTERACTIVE INTÉGRÉE ---
 if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align: center; color: #5865F2;'>Connexion Discord</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #9aa0a6; font-size: 14px;'>Entrez vos identifiants Discord pour accéder à l'assistant.</p>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center;'>Connectez-vous à l'IA</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #9aa0a6; font-size: 14px;'>Accédez à votre historique, envoyez des fichiers et discutez avec l'assistant.</p>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Formulaire de connexion direct style Discord
-        with st.form("login_discord_direct"):
-            discord_input = st.text_input("E-mail ou numéro de téléphone", placeholder="nom@exemple.com")
+        # Formulaire de connexion fluide et direct
+        with st.form("login_direct"):
+            email_input = st.text_input("Adresse e-mail Google ou Discord", placeholder="ex: hamox95754@gmail.com")
             password_input = st.text_input("Mot de passe", type="password", placeholder="••••••••")
             
             st.markdown("<br>", unsafe_allow_html=True)
             submit_btn = st.form_submit_button("Se connecter", use_container_width=True)
             
             if submit_btn:
-                if discord_input and len(discord_input) > 3:
+                if email_input and len(email_input) > 3 and "@" in email_input:
                     st.session_state.logged_in = True
-                    st.session_state.user_identity = f"Discord: {discord_input}"
-                    st.success("Connexion Discord réussie !")
+                    st.session_state.user_identity = email_input
+                    st.success("Connexion réussie !")
                     st.rerun()
                 else:
-                    st.error("Veuillez remplir tous les champs correctement.")
+                    st.error("Veuillez entrer une adresse e-mail valide.")
 
 else:
     # --- BARRE LATÉRALE ---
