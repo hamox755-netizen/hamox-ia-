@@ -150,9 +150,7 @@ def show_main_app():
             web_tag = "🌍 [Web Actif]" if web_search_on else "🧠 [Mémoire Interne]"
             sec_tag = "🔒 [Sécurisé]" if restrictions_on else "⚠️ [Sans Filtre]"
             
-            reponse = f"{web_tag} {sec_tag}
-
-Réponse générée pour : *{prompt}*"
+            reponse = f"{web_tag} {sec_tag}\n\nRéponse générée pour : *{prompt}*"
 
             st.session_state.messages.append({"role": "assistant", "content": reponse})
             with st.chat_message("assistant"):
