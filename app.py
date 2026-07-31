@@ -1,7 +1,7 @@
 import streamlit as st
 import time
 
-st.set_page_config(page_title="Mon IA - Interface Pro", page_icon="✨", layout="wide")
+st.set_page_config(page_title="Mon IA - Authentification officielle", page_icon="✨", layout="wide")
 
 # --- STYLE CSS TYPE CHATGPT / GEMINI ---
 st.markdown("""
@@ -26,7 +26,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- INITIALISATION DE LA MÉMOIRE ---
+# --- INITIALISATION DE LA MÉMOIRE DE SESSION ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "user_identity" not in st.session_state:
@@ -36,34 +36,50 @@ if "chats" not in st.session_state:
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = "Nouvelle discussion"
 
-# --- PAGE DE CONNEXION INTERACTIVE INTÉGRÉE ---
+# --- PAGE DE CONNEXION OFFICIELLE (OAUTH GOOGLE & DISCORD) ---
 if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align: center;'>Connectez-vous à l'IA</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #9aa0a6; font-size: 14px;'>Accédez à votre historique, envoyez des fichiers et discutez avec l'assistant.</p>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center;'>Connectez-vous ou inscrivez-vous</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #9aa0a6; font-size: 14px;'>Utilisez vos comptes officiels pour accéder à l'assistant.</p>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Formulaire de connexion fluide et direct
-        with st.form("login_direct"):
-            email_input = st.text_input("Adresse e-mail Google ou Discord", placeholder="ex: hamox95754@gmail.com")
-            password_input = st.text_input("Mot de passe", type="password", placeholder="••••••••")
+        # 1. Bouton Google officiel (ouvre la page de sélection de compte Google que tu as montrée)
+        st.markdown("""
+            <a href="https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Faccounts.google.com%2F&flowName=GlifWebSignIn&flowEntry=ServiceLogin" target="_blank" style="text-decoration: none;">
+                <div style="background-color: #212121; color: #ffffff; padding: 12px; border-radius: 25px; text-align: center; font-weight: 500; margin-bottom: 12px; border: 1px solid #424242; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span style="color: #ea4335; font-weight: bold; font-size: 16px;">G</span> Continuer avec Google
+                </div>
+            </a>
+        """, unsafe_allow_html=True)
+
+        # 2. Bouton Discord officiel (ouvre la page de connexion Discord)
+        st.markdown("""
+            <a href="https://discord.com/login" target="_blank" style="text-decoration: none;">
+                <div style="background-color: #5865F2; color: #ffffff; padding: 12px; border-radius: 25px; text-align: center; font-weight: 500; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    🎮 Continuer avec Discord
+                </div>
+            </a>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<p style='text-align: center; color: #888; font-size: 13px;'>Une fois connecté sur votre navigateur, validez votre session ci-dessous :</p>", unsafe_allow_html=True)
+
+        # 3. Validation de l'e-mail après connexion externe
+        with st.form("validation_oauth"):
+            email_valide = st.text_input("Votre e-mail Google ou Discord :", placeholder="mon.email@gmail.com")
+            btn_valider = st.form_submit_button("Entrer dans l'application", use_container_width=True)
             
-            st.markdown("<br>", unsafe_allow_html=True)
-            submit_btn = st.form_submit_button("Se connecter", use_container_width=True)
-            
-            if submit_btn:
-                if email_input and len(email_input) > 3 and "@" in email_input:
+            if btn_valider:
+                if email_valide and "@" in email_valide:
                     st.session_state.logged_in = True
-                    st.session_state.user_identity = email_input
-                    st.success("Connexion réussie !")
+                    st.session_state.user_identity = email_valide
                     st.rerun()
                 else:
-                    st.error("Veuillez entrer une adresse e-mail valide.")
+                    st.error("Veuillez entrer un e-mail valide.")
 
 else:
-    # --- BARRE LATÉRALE ---
+    # --- BARRE LATÉRALE DE L'APPLICATION ---
     with st.sidebar:
         st.markdown(f"👤 **{st.session_state.user_identity}**")
         
