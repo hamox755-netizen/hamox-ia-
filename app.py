@@ -1,144 +1,165 @@
 import streamlit as st
 import time
 
-st.set_page_config(page_title="Mon IA Ultime", page_icon="✨", layout="wide")
+st.set_page_config(page_title="Mon IA - Interface Gemini", page_icon="✨", layout="wide")
 
-# --- STYLE CSS AMÉLIORÉ (GUI MODERNE, DÉFILEMENT & EFFETS) ---
+# --- GUI STYLE TYPE GEMINI (MODE SOMBRE AVANCÉ & BOUTON + À GAUCHE) ---
 st.markdown("""
     <style>
     .stApp {
-        background-color: #0e1117;
-        color: #ffffff;
+        background-color: #131314;
+        color: #e3e3e3;
     }
-    /* Style de la boîte de chat et scrollbar */
-    .stChatFloatingInputContainer {
-        background-color: #0e1117;
+    /* Masquer le menu Streamlit classique et le footer */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    /* Barre latérale type Gemini */
+    section[data-testid="stSidebar"] {
+        background-color: #1e1f22;
+        border-right: 1px solid #2b2d31;
     }
-    /* Effet d'apparition du texte du bot */
-    .element-container {
-        animation: fadeIn 0.5s ease-in-out;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(5px); }
-        to { opacity: 1; transform: translateY(0); }
+    
+    /* Style des boutons d'envoi et de fichiers */
+    .stChatInputContainer {
+        background-color: #1e1f22 !important;
+        border-radius: 30px !important;
+        border: 1px solid #444746 !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- INITIALISATION DE LA MÉMOIRE DE SESSION ---
+# --- INITIALISATION DE LA MÉMOIRE ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
-if "user_name" not in st.session_state:
-    st.session_state.user_name = ""
+if "user_email" not in st.session_state:
+    st.session_state.user_email = ""
 if "chats" not in st.session_state:
-    st.session_state.chats = {"Discussion 1": []}
+    st.session_state.chats = {"Nouvelle discussion": []}
 if "current_chat" not in st.session_state:
-    st.session_state.current_chat = "Discussion 1"
+    st.session_state.current_chat = "Nouvelle discussion"
 
-# --- PAGE DE CONNEXION AVANCÉE ---
+# --- VRAI SYSTÈME DE CONNEXION (OAUTH SIMULÉ AVEC REDIRECTION OFFICIELLE) ---
 if not st.session_state.logged_in:
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
-        st.markdown("<h1 style='text-align: center;'>🔐 Connexion à l'IA</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: gray;'>Choisissez votre méthode de connexion</p>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center;'>Connexion requise</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #9aa0a6;'>Connectez-vous via vos comptes officiels.</p>", unsafe_allow_html=True)
         
-        with st.form("login_form"):
-            email = st.text_input("Adresse Email")
-            password = st.text_input("Mot de passe", type="password")
-            remember_me = st.checkbox("Se rappeler de moi")
-            submit = st.form_submit_button("Se connecter", use_container_width=True)
-            
-            if submit:
-                if email and password:
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Bouton Google Officiel (Redirige vers la vraie mire de connexion Google)
+        st.markdown("""
+            <a href="https://accounts.google.com/signin" target="_blank" style="text-decoration: none;">
+                <div style="background-color: #ffffff; color: #3c4043; padding: 12px; border-radius: 24px; text-align: center; font-weight: bold; margin-bottom: 10px; border: 1px solid #dadce0; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span style="color: #ea4335; font-size: 18px;">G</span> Se connecter avec Google (Officiel)
+                </div>
+            </a>
+        """, unsafe_allow_html=True)
+
+        # Bouton Discord Officiel (Redirige vers la vraie mire Discord)
+        st.markdown("""
+            <a href="https://discord.com/login" target="_blank" style="text-decoration: none;">
+                <div style="background-color: #5865F2; color: #ffffff; padding: 12px; border-radius: 24px; text-align: center; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    Se connecter avec Discord (Officiel)
+                </div>
+            </a>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<p style='text-align: center; font-size: 12px; color: gray;'>En cas d'oubli de mot de passe ou pour réinitialiser votre email, veuillez le faire directement depuis les paramètres de votre compte Google ou Discord.</p>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        
+        # Simulation de validation de connexion pour entrer dans l'app
+        with st.form("valider_connexion"):
+            email_verif = st.text_input("Entrez votre email Google/Discord connecté :")
+            valider = st.form_submit_button("Entrer dans l'application", use_container_width=True)
+            if valider:
+                if email_verif:
                     st.session_state.logged_in = True
-                    st.session_state.user_name = email.split("@")[0]
-                    st.success("Connexion réussie !")
+                    st.session_state.user_email = email_verif
                     st.rerun()
                 else:
-                    st.error("Veuillez remplir tous les champs.")
-
-        st.markdown("---")
-        st.markdown("<p style='text-align: center;'>Ou connectez-vous avec :</p>", unsafe_allow_html=True)
-        
-        # Boutons Sociaux
-        col_g, col_d = st.columns(2)
-        with col_g:
-            if st.button("🔴 Google", use_container_width=True):
-                st.session_state.logged_in = True
-                st.session_state.user_name = "Utilisateur Google"
-                st.success("Connecté avec Google !")
-                st.rerun()
-        with col_d:
-            if st.button("🔵 Discord", use_container_width=True):
-                st.session_state.logged_in = True
-                st.session_state.user_name = "Utilisateur Discord"
-                st.success("Connecté avec Discord !")
-                st.rerun()
+                    st.error("Veuillez entrer un email valide.")
 
 else:
-    # --- BARRE LATÉRALE (HISTORIQUE DÉROULANT & FICHIERS) ---
+    # --- BARRE LATÉRALE TYPE GEMINI (HISTORIQUE & OPTIONS) ---
     with st.sidebar:
-        st.write(f"👤 Connecté : **{st.session_state.user_name}**")
+        st.markdown(f"👤 **{st.session_state.user_email}**")
         
         if st.button("➕ Nouvelle discussion", use_container_width=True):
-            new_title = f"Discussion {len(st.session_state.chats) + 1}"
-            st.session_state.chats[new_title] = []
-            st.session_state.current_chat = new_title
+            chat_name = f"Discussion {len(st.session_state.chats) + 1}"
+            st.session_state.chats[chat_name] = []
+            st.session_state.current_chat = chat_name
             st.rerun()
 
         st.markdown("---")
-        st.subheader("📜 Historique des chats")
+        st.subheader("Récents")
         
-        # Système déroulant pour choisir parmi les anciennes discussions
-        selected_chat = st.selectbox("Sélectionner un salon", list(st.session_state.chats.keys()), index=list(st.session_state.chats.keys()).index(st.session_state.current_chat))
-        if selected_chat != st.session_state.current_chat:
-            st.session_state.current_chat = selected_chat
+        # Historique déroulant des salons
+        choix_chat = st.selectbox("Historique", list(st.session_state.chats.keys()), index=list(st.session_state.chats.keys()).index(st.session_state.current_chat))
+        if choix_chat != st.session_state.current_chat:
+            st.session_state.current_chat = choix_chat
             st.rerun()
 
         st.markdown("---")
-        st.subheader("📁 Documents & Médias")
-        uploaded_file = st.file_uploader("Envoyer une photo / fichier", type=["png", "jpg", "jpeg", "pdf", "txt", "docx"])
-        if uploaded_file is not None:
-            st.success(f"Fichier analysé : {uploaded_file.name}")
-
-        st.markdown("---")
-        if st.button("🚪 Se déconnecter", use_container_width=True):
+        if st.button("🚪 Déconnexion", use_container_width=True):
             st.session_state.logged_in = False
             st.rerun()
 
-    # --- INTERFACE PRINCIPALE (CHAT & STREAMING DE TEXTE) ---
-    st.title("✨ Assistant IA Avancé & Connecté")
+    # --- INTERFACE PRINCIPALE TYPE GEMINI ---
+    st.title("Bonjour")
+    st.markdown("<p style='color: #9aa0a6; font-size: 20px;'>Comment puis-je vous aider aujourd'hui ?</p>", unsafe_allow_html=True)
 
-    # Récupération de l'historique du chat actuel
-    current_messages = st.session_state.chats[st.session_state.current_chat]
+    # Récupération de l'historique du chat actif
+    messages_actuels = st.session_state.chats[st.session_state.current_chat]
 
-    # Affichage des messages passés
-    for message in current_messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    # Affichage de l'historique de la conversation
+    for msg in messages_actuels:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+            if "file" in msg and msg["file"] is not None:
+                st.image(msg["file"], width=250)
 
-    # Entrée utilisateur
-    if prompt := st.chat_input("Posez votre question à l'IA..."):
-        # Ajout message utilisateur
-        current_messages.append({"role": "user", "content": prompt})
+    # --- ZONE D'ENVOI (BOUTON "+" À GAUCHE POUR LES PHOTOS COMME GEMINI) ---
+    col_plus, col_input = st.columns([0.08, 0.92])
+    
+    with col_plus:
+        # Bouton "+" pour afficher l'option d'envoi de fichier à gauche de la barre
+        ajouter_fichier = st.popover("➕", help="Ajouter une image ou un fichier")
+    
+    with col_input:
+        prompt = st.chat_input("Posez une question à l'IA...")
+
+    # Gestion de l'upload via le menu popover de gauche
+    uploaded_file = None
+    with ajouter_fichier:
+        st.write("Ajouter un fichier")
+        uploaded_file = st.file_uploader("Choisissez une image ou un document", type=["png", "jpg", "jpeg", "pdf", "txt"])
+
+    # Traitement du message et de l'image
+    if prompt or uploaded_file:
+        contenu_prompt = prompt if prompt else "Analyse ce fichier :"
+        
+        # Enregistrement message utilisateur
+        messages_actuels.append({"role": "user", "content": contenu_prompt, "file": uploaded_file})
+        
         with st.chat_message("user"):
-            st.markdown(prompt)
+            st.markdown(contenu_prompt)
+            if uploaded_file:
+                st.image(uploaded_file, width=250)
 
-        # Génération de la réponse avec effet "style machine à écrire" (le bot ne répond pas instantanément)
-        bot_response = f"🔍 **Recherche globale effectuée** (Web & Interne).\n\nVoici l'analyse détaillée concernant votre demande : *'{prompt}'*.\n\nTout est pris en compte avec un niveau de sécurité optimal et des sources vérifiées."
+        # Réponse de l'IA progressive (effet machine à écrire stylé)
+        reponse_bot = f"🌐 **Recherche globale et analyse approfondie** de votre demande : *'{contenu_prompt}'*.\n\nL'IA a examiné l'ensemble des bases de données et des sources sécurisées pour vous apporter une réponse claire, précise et détaillée."
 
         with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            simulated_text = ""
-            
-            # Effet de frappe stylé (streaming visuel mot par mot)
-            for chunk in bot_response.split(" "):
-                simulated_text += chunk + " "
-                time.sleep(0.04)
-                message_placeholder.markdown(simulated_text + "▌")
-            
-            # Affichage final propre sans curseur
-            message_placeholder.markdown(bot_response)
+            placeholder = st.empty()
+            texte_anime = ""
+            for mot in reponse_bot.split(" "):
+                texte_anime += mot + " "
+                time.sleep(0.03)
+                placeholder.markdown(texte_anime + "▌")
+            placeholder.markdown(reponse_bot)
 
-        # Sauvegarde dans l'historique
-        current_messages.append({"role": "assistant", "content": bot_response})
+        # Enregistrement réponse assistant
+        messages_actuels.append({"role": "assistant", "content": reponse_bot, "file": None})
